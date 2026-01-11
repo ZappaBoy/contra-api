@@ -5,7 +5,7 @@ const { githubContributionData, gitlabContributionData } = require('../requests'
 function appendContribution(contributions, contribution) {
     const index = contributions.findIndex(item => item.date === contribution.date)
     if (index !== -1) {
-        contributions[index].count = contributions[index].count + contribution.count
+        contributions[index].count += contribution.count
     } else {
         contributions.push(contribution)
     }
@@ -43,21 +43,12 @@ router.get('/', async (req, res) => {
     }
 
     for (const username of gitlabUsernames) {
-
         let gitlabData = await gitlabContributionData(username).then(data => {
             return Object.entries(data).map(([key, value]) => ({date: key, count: value}))
         })
-
-        contributions.forEach((element, index) => {
-            const itemIndex = gitlabData.findIndex(item => item.date === element.date)
-
-            if (itemIndex !== -1) {
-                appendContribution(contributions, {
-                    date: contributions[index].date,
-                    count: contributions[index].count
-                })
-            }
-        });
+        gitlabData.forEach(element => {
+            appendContribution(contributions, element)
+        })
     }
 
     const totalContributionCount = contributions.reduce((accumulator, contribution) => {
